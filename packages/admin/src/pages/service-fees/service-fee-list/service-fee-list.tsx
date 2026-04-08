@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import { Button, Container, Heading, Text } from "@medusajs/ui"
+import { Button, Heading, Text } from "@medusajs/ui"
 import { Plus } from "@medusajs/icons"
 import { SingleColumnPage } from "../../../components/layout/pages"
 import { GlobalFeeSummaryCard } from "./components/global-fee-summary-card"

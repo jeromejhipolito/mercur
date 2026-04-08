@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useForm, Controller } from "react-hook-form"
 import {
@@ -9,7 +8,6 @@ import {
   Label,
   RadioGroup,
   Text,
-  Checkbox,
   Select,
   toast,
 } from "@medusajs/ui"
@@ -55,7 +53,7 @@ export const ServiceFeeCreatePage = () => {
 
   const chargingLevel = watch("charging_level")
   const customPeriod = watch("custom_period")
-  const applyToShops = watch("apply_to_shops")
+  void watch("apply_to_shops")
 
   const onSubmit = async (data: CreateServiceFeeFormData) => {
     try {

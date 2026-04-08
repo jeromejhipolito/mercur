@@ -1,13 +1,12 @@
 import { useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { useForm, Controller } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import {
   Button,
   Container,
   Heading,
   Input,
   Label,
-  Select,
   Text,
   toast,
 } from "@medusajs/ui"
