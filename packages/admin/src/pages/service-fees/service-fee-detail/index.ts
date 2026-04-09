@@ -1,3 +1,3 @@
-import { ServiceFeeDetailPage } from "./service-fee-detail"
-
-export const Component = ServiceFeeDetailPage
+export { ServiceFeeDetailBreadcrumb as Breadcrumb } from "./breadcrumb"
+export { serviceFeeLoader as loader } from "./loader"
+export { ServiceFeeDetailPage as Component } from "./service-fee-detail"

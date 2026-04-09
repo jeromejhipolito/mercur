@@ -17,6 +17,7 @@ export const POST = async (
       create: req.validatedBody.create,
       update: req.validatedBody.update,
       delete: req.validatedBody.delete,
+      changed_by: req.auth_context?.actor_id,
     },
   })
 

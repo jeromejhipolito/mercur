@@ -38,10 +38,18 @@ export const AdminGetServiceFeesParams = createFindParams({
   })
 )
 
+const ServiceFeeRuleReferenceEnum = z.enum([
+  "product",
+  "product_type",
+  "product_collection",
+  "product_category",
+  "seller",
+])
+
 const ServiceFeeRuleSchema = z.object({
-  reference: z.string(),
+  reference: ServiceFeeRuleReferenceEnum,
   reference_id: z.string(),
-  mode: z.string().optional(),
+  mode: z.enum(["include", "exclude"]).optional(),
 })
 
 export type AdminCreateServiceFeeType = z.infer<typeof AdminCreateServiceFee>
@@ -104,9 +112,9 @@ export const AdminUpdateServiceFee = z.object({
 
 const UpdateServiceFeeRuleSchema = z.object({
   id: z.string(),
-  reference: z.string().optional(),
+  reference: ServiceFeeRuleReferenceEnum.optional(),
   reference_id: z.string().optional(),
-  mode: z.string().optional(),
+  mode: z.enum(["include", "exclude"]).optional(),
 })
 
 export type AdminBatchServiceFeeRulesType = z.infer<

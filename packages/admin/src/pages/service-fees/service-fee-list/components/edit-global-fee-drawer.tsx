@@ -1,49 +1,39 @@
-import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import {
-  Drawer,
   Button,
-  Input,
-  Label,
-  Text,
   Heading,
-  Prompt,
+  Input,
+  Text,
   toast,
+  usePrompt,
 } from "@medusajs/ui"
+import { useForm } from "react-hook-form"
+import { useTranslation } from "react-i18next"
+
+import { Form } from "../../../../components/common/form"
+import { PercentageInput } from "../../../../components/inputs/percentage-input"
 import {
+  RouteDrawer,
+  useRouteModal,
+} from "../../../../components/modals"
+import { KeyboundForm } from "../../../../components/utilities/keybound-form"
+import {
+  useServiceFees,
   useUpdateServiceFee,
   useDeactivateServiceFee,
 } from "../../../../hooks/api/service-fees"
+import {
+  EditGlobalFeeSchema,
+  type EditGlobalFeeFormData,
+} from "./edit-global-fee-schema"
+import type { ServiceFee } from "../../types"
 
-type EditGlobalFeeFormData = {
-  name: string
-  display_name: string
-  value: number
-  effective_date: string
-}
+const EditGlobalFeeForm = ({ fee }: { fee: ServiceFee }) => {
+  const { t } = useTranslation()
+  const { handleSuccess } = useRouteModal()
+  const prompt = usePrompt()
 
-type ServiceFeeData = {
-  id: string
-  name: string
-  display_name: string
-  value: number
-  effective_date: string | null
-  [key: string]: unknown
-}
-
-type Props = {
-  fee: ServiceFeeData
-  open: boolean
-  onClose: () => void
-}
-
-export const EditGlobalFeeDrawer = ({ fee, open, onClose }: Props) => {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<EditGlobalFeeFormData>({
+  const form = useForm<EditGlobalFeeFormData>({
     defaultValues: {
       name: fee?.name ?? "",
       display_name: fee?.display_name ?? "",
@@ -52,178 +42,189 @@ export const EditGlobalFeeDrawer = ({ fee, open, onClose }: Props) => {
         ? new Date(fee.effective_date).toISOString().split("T")[0]
         : "",
     },
+    resolver: zodResolver(EditGlobalFeeSchema),
   })
 
-  useEffect(() => {
-    if (fee) {
-      reset({
-        name: fee.name,
-        display_name: fee.display_name,
-        value: fee.value,
-        effective_date: fee.effective_date
-          ? new Date(fee.effective_date).toISOString().split("T")[0]
-          : "",
-      })
-    }
-  }, [fee, reset])
+  const { mutateAsync: updateServiceFee, isPending: isUpdating } =
+    useUpdateServiceFee(fee?.id)
+  const { mutateAsync: deactivateServiceFee, isPending: isDeactivating } =
+    useDeactivateServiceFee(fee?.id)
 
-  const updateMutation = useUpdateServiceFee(fee?.id)
-  const deactivateMutation = useDeactivateServiceFee(fee?.id)
-
-  const onSubmit = async (data: EditGlobalFeeFormData) => {
+  const handleSubmit = form.handleSubmit(async (values) => {
     try {
-      await updateMutation.mutateAsync({
-        name: data.name,
-        display_name: data.display_name,
-        value: Number(data.value),
-        effective_date: data.effective_date
-          ? new Date(data.effective_date).toISOString()
+      await updateServiceFee({
+        name: values.name,
+        display_name: values.display_name,
+        value: Number(values.value),
+        effective_date: values.effective_date
+          ? new Date(values.effective_date).toISOString()
           : undefined,
       })
-      toast.success("Global service fee updated")
-      onClose()
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to update")
+      toast.success(t("serviceFees.toast.updated"))
+      handleSuccess()
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : t("serviceFees.toast.updateFailed")
+      toast.error(message)
     }
-  }
-
-  const [showDeactivatePrompt, setShowDeactivatePrompt] = useState(false)
+  })
 
   const handleDeactivate = async () => {
+    const res = await prompt({
+      title: t("serviceFees.deactivatePrompt.title"),
+      description: t("serviceFees.deactivatePrompt.description"),
+      confirmText: t("serviceFees.actions.deactivate"),
+      cancelText: t("actions.cancel"),
+    })
+
+    if (!res) return
+
     try {
-      await deactivateMutation.mutateAsync()
-      toast.success("Global fee deactivated")
-      setShowDeactivatePrompt(false)
-      onClose()
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to deactivate")
+      await deactivateServiceFee()
+      toast.success(t("serviceFees.toast.deactivated"))
+      handleSuccess()
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : t("serviceFees.toast.deactivateFailed")
+      toast.error(message)
     }
   }
 
+  const isPending = isUpdating || isDeactivating
+
   return (
-    <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
-      <Drawer.Content>
-        <Drawer.Header>
-          <Heading>Edit Global Service Fee</Heading>
-        </Drawer.Header>
-        <Drawer.Body className="space-y-4">
-          <form
-            id="edit-global-fee-form"
-            onSubmit={handleSubmit(onSubmit)}
-            className="space-y-4"
-          >
-            <div>
-              <Label htmlFor="name">Fee Name *</Label>
-              <Input
-                id="name"
-                {...register("name", { required: "Name is required" })}
-              />
-              {errors.name && (
-                <Text className="text-ui-fg-error text-xs mt-1">
-                  {errors.name.message}
-                </Text>
+    <RouteDrawer.Form form={form}>
+      <KeyboundForm
+        className="flex flex-1 flex-col overflow-hidden"
+        onSubmit={handleSubmit}
+      >
+        <RouteDrawer.Body className="flex flex-1 flex-col gap-y-6 overflow-auto">
+          <div className="grid grid-cols-1 gap-4">
+            <Form.Field
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label>{t("serviceFees.fields.feeName")}</Form.Label>
+                  <Form.Control>
+                    <Input {...field} />
+                  </Form.Control>
+                  <Form.ErrorMessage />
+                </Form.Item>
               )}
-            </div>
-
-            <div>
-              <Label htmlFor="display_name">Display Name to Seller *</Label>
-              <Input
-                id="display_name"
-                {...register("display_name", {
-                  required: "Display name is required",
-                })}
-              />
-              <Text className="text-ui-fg-subtle text-xs mt-1">
-                This name will be displayed to sellers in the seller center
-              </Text>
-            </div>
-
-            <div>
-              <Label htmlFor="value">Service Fee Rate (%) *</Label>
-              <Input
-                id="value"
-                type="number"
-                step="0.01"
-                {...register("value", {
-                  required: "Rate is required",
-                  min: { value: 0.01, message: "Must be greater than 0" },
-                  max: { value: 100, message: "Cannot exceed 100%" },
-                  valueAsNumber: true,
-                })}
-              />
-              {errors.value && (
-                <Text className="text-ui-fg-error text-xs mt-1">
-                  {errors.value.message}
-                </Text>
+            />
+            <Form.Field
+              control={form.control}
+              name="display_name"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label>{t("serviceFees.fields.displayName")}</Form.Label>
+                  <Form.Control>
+                    <Input {...field} />
+                  </Form.Control>
+                  <Form.Hint>
+                    {t("serviceFees.fields.displayNameHint")}
+                  </Form.Hint>
+                  <Form.ErrorMessage />
+                </Form.Item>
               )}
-            </div>
+            />
+            <Form.Field
+              control={form.control}
+              name="value"
+              render={({ field: { value, onChange, ...field } }) => (
+                <Form.Item>
+                  <Form.Label>{t("serviceFees.fields.rate")}</Form.Label>
+                  <Form.Control>
+                    <PercentageInput
+                      {...field}
+                      value={value}
+                      decimalsLimit={2}
+                      onValueChange={(_value, _name, values) =>
+                        onChange(values?.float ?? 0)
+                      }
+                    />
+                  </Form.Control>
+                  <Form.ErrorMessage />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name="effective_date"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label>{t("serviceFees.globalFee.effectiveDate")}</Form.Label>
+                  <Form.Control>
+                    <Input type="date" {...field} />
+                  </Form.Control>
+                  <Form.Hint>
+                    {t("serviceFees.globalFee.effectiveDateHint")}
+                  </Form.Hint>
+                  <Form.ErrorMessage />
+                </Form.Item>
+              )}
+            />
+          </div>
 
-            <div>
-              <Label htmlFor="effective_date">Effective Date *</Label>
-              <Input
-                id="effective_date"
-                type="date"
-                {...register("effective_date", {
-                  required: "Effective date is required",
-                })}
-              />
-              <Text className="text-ui-fg-subtle text-xs mt-1">
-                If set to a future date, the current global fee remains active
-                until then.
-              </Text>
-            </div>
-
-            <div className="rounded-lg border border-ui-border-base bg-ui-bg-subtle p-3">
-              <Text className="font-medium text-sm">Important</Text>
-              <Text className="text-ui-fg-subtle text-xs mt-1">
-                Editing the global fee will create a new fee rule and deactivate
-                the current one. The change will be effective on the selected
-                date.
-              </Text>
-            </div>
-          </form>
-        </Drawer.Body>
-        <Drawer.Footer>
+          <div className="rounded-lg border border-ui-border-base bg-ui-bg-subtle p-3">
+            <Text className="font-medium text-sm">{t("serviceFees.globalFee.important")}</Text>
+            <Text className="text-ui-fg-subtle text-xs mt-1">
+              {t("serviceFees.globalFee.importantNotice")}
+            </Text>
+          </div>
+        </RouteDrawer.Body>
+        <RouteDrawer.Footer>
           <div className="flex items-center justify-between w-full">
             <Button
               variant="danger"
-              onClick={() => setShowDeactivatePrompt(true)}
-              disabled={deactivateMutation.isPending}
+              size="small"
+              type="button"
+              onClick={handleDeactivate}
+              disabled={isDeactivating}
             >
-              Deactivate Fee
+              {t("serviceFees.actions.deactivateFee")}
             </Button>
-            <Prompt open={showDeactivatePrompt} onOpenChange={setShowDeactivatePrompt}>
-              <Prompt.Content>
-                <Prompt.Header>
-                  <Prompt.Title>Deactivate Global Fee</Prompt.Title>
-                  <Prompt.Description>
-                    Are you sure you want to deactivate this global fee? Orders will not have a global fee applied until a new one is activated.
-                  </Prompt.Description>
-                </Prompt.Header>
-                <Prompt.Footer>
-                  <Prompt.Cancel>Cancel</Prompt.Cancel>
-                  <Prompt.Action onClick={handleDeactivate}>
-                    Deactivate
-                  </Prompt.Action>
-                </Prompt.Footer>
-              </Prompt.Content>
-            </Prompt>
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                form="edit-global-fee-form"
-                disabled={isSubmitting || updateMutation.isPending}
-                isLoading={updateMutation.isPending}
-              >
-                Save Changes
+              <RouteDrawer.Close asChild>
+                <Button size="small" variant="secondary">
+                  {t("actions.cancel")}
+                </Button>
+              </RouteDrawer.Close>
+              <Button size="small" type="submit" isLoading={isPending}>
+                {t("serviceFees.actions.saveChanges")}
               </Button>
             </div>
           </div>
-        </Drawer.Footer>
-      </Drawer.Content>
-    </Drawer>
+        </RouteDrawer.Footer>
+      </KeyboundForm>
+    </RouteDrawer.Form>
   )
 }
+
+export const EditGlobalFeeDrawer = () => {
+  const { t } = useTranslation()
+  const { service_fees, isLoading } = useServiceFees({
+    charging_level: "global",
+    status: "active",
+    limit: 1,
+  })
+
+  const globalFee = service_fees?.[0]
+
+  return (
+    <RouteDrawer>
+      <RouteDrawer.Header>
+        <Heading>{t("serviceFees.globalFee.editTitle")}</Heading>
+      </RouteDrawer.Header>
+      {!isLoading && globalFee && <EditGlobalFeeForm fee={globalFee} />}
+      {!isLoading && !globalFee && (
+        <RouteDrawer.Body>
+          <Text className="text-ui-fg-subtle">
+            {t("serviceFees.globalFee.noActiveGlobalFeeFound")}
+          </Text>
+        </RouteDrawer.Body>
+      )}
+    </RouteDrawer>
+  )
+}
+
+export const Component = EditGlobalFeeDrawer

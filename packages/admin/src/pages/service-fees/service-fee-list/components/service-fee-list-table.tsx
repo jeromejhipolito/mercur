@@ -2,12 +2,14 @@ import { useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { Container, Badge, clx } from "@medusajs/ui"
 import { createDataTableColumnHelper } from "@medusajs/ui"
+import { useTranslation } from "react-i18next"
 import { _DataTable } from "../../../../components/table/data-table"
 import { useDataTable } from "../../../../hooks/use-data-table"
 import { useServiceFees } from "../../../../hooks/api/service-fees"
 import { useQueryParams } from "../../../../hooks/use-query-params"
+import type { ServiceFee } from "../../types"
 
-const columnHelper = createDataTableColumnHelper<any>()
+const columnHelper = createDataTableColumnHelper<ServiceFee>()
 
 const statusColorMap: Record<string, string> = {
   active: "green",
@@ -16,23 +18,27 @@ const statusColorMap: Record<string, string> = {
 }
 
 const useColumns = () => {
+  const { t } = useTranslation()
+
   return useMemo(
     () => [
       columnHelper.accessor("id", {
-        header: "Fee ID",
+        header: t("serviceFees.detail.feeId"),
         cell: ({ getValue }) => {
           const id = getValue()
           return <span className="txt-compact-small">#{id?.split("_").pop()}</span>
         },
       }),
       columnHelper.accessor("name", {
-        header: "Fee Name",
+        header: t("serviceFees.fields.feeName"),
+        enableSorting: true,
       }),
       columnHelper.accessor("display_name", {
-        header: "Display Name",
+        header: t("serviceFees.fields.displayName"),
+        enableSorting: true,
       }),
       columnHelper.accessor("charging_level", {
-        header: "Charging Level",
+        header: t("serviceFees.fields.chargingLevel"),
         cell: ({ getValue }) => {
           const level = getValue()
           return (
@@ -41,11 +47,11 @@ const useColumns = () => {
         },
       }),
       columnHelper.accessor("value", {
-        header: "Rate (%)",
+        header: t("serviceFees.fields.rate"),
         cell: ({ getValue }) => `${getValue()}%`,
       }),
       columnHelper.accessor("start_date", {
-        header: "Period",
+        header: t("serviceFees.fields.period"),
         cell: ({ row }) => {
           const start = row.original.start_date
           const end = row.original.end_date
@@ -60,7 +66,7 @@ const useColumns = () => {
         },
       }),
       columnHelper.accessor("status", {
-        header: "Status",
+        header: t("serviceFees.fields.status"),
         cell: ({ getValue }) => {
           const status = getValue() as string
           return (
@@ -74,7 +80,8 @@ const useColumns = () => {
         },
       }),
       columnHelper.accessor("created_at", {
-        header: "Created Date",
+        header: t("serviceFees.fields.createdDate"),
+        enableSorting: true,
         cell: ({ getValue }) => {
           const date = getValue()
           return date
@@ -87,13 +94,17 @@ const useColumns = () => {
         },
       }),
     ],
-    []
+    [t]
   )
 }
 
 export const ServiceFeeListTable = () => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
-  const params = useQueryParams(["q", "status", "charging_level", "offset", "limit"])
+  const rawParams = useQueryParams(["q", "status", "charging_level", "offset", "order"])
+  const params = Object.fromEntries(
+    Object.entries(rawParams).filter(([_, v]) => v !== undefined)
+  )
 
   const {
     service_fees,
@@ -107,20 +118,53 @@ export const ServiceFeeListTable = () => {
 
   const columns = useColumns()
 
-  const table = useDataTable({
+  const { table } = useDataTable({
     data: service_fees ?? [],
     columns,
     count: count ?? 0,
     pageSize: 20,
-    isLoading,
-    onRowClick: (row) => {
-      navigate(`/settings/service-fees/${row.original.id}`)
-    },
   })
 
   return (
     <Container className="p-0 overflow-hidden">
-      <_DataTable instance={table} />
+      <_DataTable
+        table={table}
+        columns={columns}
+        count={count ?? 0}
+        pageSize={20}
+        isLoading={isLoading}
+        pagination
+        navigateTo={(row) => `/settings/service-fees/${row.original.id}`}
+        search
+        queryObject={params}
+        orderBy={[
+          { key: "name", label: t("serviceFees.fields.feeName") },
+          { key: "created_at", label: t("serviceFees.fields.createdDate") },
+          { key: "display_name", label: t("serviceFees.fields.displayName") },
+        ]}
+        filters={[
+          {
+            key: "status",
+            label: "Status",
+            type: "select" as const,
+            options: [
+              { label: t("general.active"), value: "active" },
+              { label: "Pending", value: "pending" },
+              { label: "Inactive", value: "inactive" },
+            ],
+          },
+          {
+            key: "charging_level",
+            label: t("serviceFees.fields.chargingLevel"),
+            type: "select" as const,
+            options: [
+              { label: t("serviceFees.fields.itemLevel"), value: "item" },
+              { label: t("serviceFees.fields.shopLevel"), value: "shop" },
+              { label: "Global", value: "global" },
+            ],
+          },
+        ]}
+      />
     </Container>
   )
 }

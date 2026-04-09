@@ -5,47 +5,36 @@ import {
   useMutation,
   useQuery,
 } from "@tanstack/react-query"
+import { fetchQuery } from "../../lib/client"
 import { queryClient } from "../../lib/query-client"
 import { queryKeysFactory } from "../../lib/query-key-factory"
 
 const SERVICE_FEES_QUERY_KEY = "service_fees" as const
 export const serviceFeesQueryKeys = queryKeysFactory(SERVICE_FEES_QUERY_KEY)
 
-const backendUrl = __BACKEND_URL__ ?? "/api"
-
-async function fetchApi<T>(
-  path: string,
-  options?: RequestInit
-): Promise<T> {
-  const res = await fetch(`${backendUrl}${path}`, {
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers ?? {}),
-    },
-    ...options,
-  })
-  if (!res.ok) {
-    throw new Error(`API Error: ${res.status}`)
-  }
-  return res.json()
+type ServiceFeePayload = Record<string, unknown>
+type BatchRulesPayload = {
+  create?: Array<{ reference: string; reference_id: string; mode?: string }>
+  update?: Array<{ id: string; reference?: string; reference_id?: string; mode?: string }>
+  delete?: string[]
 }
+type QueryParams = Record<string, string | number | object>
+
+// NOTE: Query hooks use `any` for UseQueryOptions data generics because the
+// MedusaJS pattern spreads `data` into the return value (`{ ...data, ...rest }`)
+// and the exact API response shape is not statically known here.
 
 // Queries
 export const useServiceFees = (
-  query?: Record<string, any>,
+  query?: QueryParams,
   options?: Omit<UseQueryOptions<any, Error, any, QueryKey>, "queryKey" | "queryFn">
 ) => {
-  const params = new URLSearchParams()
-  if (query) {
-    Object.entries(query).forEach(([key, val]) => {
-      if (val !== undefined && val !== null) params.set(key, String(val))
-    })
-  }
-  const qs = params.toString()
   const { data, ...rest } = useQuery({
     queryFn: () =>
-      fetchApi<any>(`/admin/service-fees${qs ? `?${qs}` : ""}`),
+      fetchQuery("/admin/service-fees", {
+        method: "GET",
+        query,
+      }),
     queryKey: serviceFeesQueryKeys.list(query),
     ...options,
   })
@@ -58,7 +47,8 @@ export const useServiceFee = (
   options?: Omit<UseQueryOptions<any, Error, any, QueryKey>, "queryKey" | "queryFn">
 ) => {
   const { data, ...rest } = useQuery({
-    queryFn: () => fetchApi<any>(`/admin/service-fees/${id}`),
+    queryFn: () =>
+      fetchQuery(`/admin/service-fees/${id}`, { method: "GET" }),
     queryKey: serviceFeesQueryKeys.detail(id),
     ...options,
   })
@@ -68,21 +58,15 @@ export const useServiceFee = (
 
 export const useServiceFeeChangeLogs = (
   id: string,
-  query?: Record<string, any>,
+  query?: QueryParams,
   options?: Omit<UseQueryOptions<any, Error, any, QueryKey>, "queryKey" | "queryFn">
 ) => {
-  const params = new URLSearchParams()
-  if (query) {
-    Object.entries(query).forEach(([key, val]) => {
-      if (val !== undefined && val !== null) params.set(key, String(val))
-    })
-  }
-  const qs = params.toString()
   const { data, ...rest } = useQuery({
     queryFn: () =>
-      fetchApi<any>(
-        `/admin/service-fees/${id}/change-logs${qs ? `?${qs}` : ""}`
-      ),
+      fetchQuery(`/admin/service-fees/${id}/change-logs`, {
+        method: "GET",
+        query,
+      }),
     queryKey: [...serviceFeesQueryKeys.detail(id), "change-logs"],
     ...options,
   })
@@ -92,13 +76,13 @@ export const useServiceFeeChangeLogs = (
 
 // Mutations
 export const useCreateServiceFee = (
-  options?: UseMutationOptions<any, Error, any>
+  options?: UseMutationOptions<Record<string, unknown>, Error, ServiceFeePayload>
 ) => {
   return useMutation({
-    mutationFn: (payload: any) =>
-      fetchApi<any>("/admin/service-fees", {
+    mutationFn: (payload: ServiceFeePayload) =>
+      fetchQuery("/admin/service-fees", {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: payload,
       }),
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -112,13 +96,13 @@ export const useCreateServiceFee = (
 
 export const useUpdateServiceFee = (
   id: string,
-  options?: UseMutationOptions<any, Error, any>
+  options?: UseMutationOptions<Record<string, unknown>, Error, ServiceFeePayload>
 ) => {
   return useMutation({
-    mutationFn: (payload: any) =>
-      fetchApi<any>(`/admin/service-fees/${id}`, {
+    mutationFn: (payload: ServiceFeePayload) =>
+      fetchQuery(`/admin/service-fees/${id}`, {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: payload,
       }),
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -135,11 +119,33 @@ export const useUpdateServiceFee = (
 
 export const useDeactivateServiceFee = (
   id: string,
-  options?: UseMutationOptions<any, Error, void>
+  options?: UseMutationOptions<Record<string, unknown>, Error, void>
 ) => {
   return useMutation({
     mutationFn: () =>
-      fetchApi<any>(`/admin/service-fees/${id}/deactivate`, {
+      fetchQuery(`/admin/service-fees/${id}/deactivate`, {
+        method: "POST",
+      }),
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({
+        queryKey: serviceFeesQueryKeys.detail(id),
+      })
+      queryClient.invalidateQueries({
+        queryKey: serviceFeesQueryKeys.lists(),
+      })
+      options?.onSuccess?.(data, variables, context)
+    },
+    ...options,
+  })
+}
+
+export const useActivateServiceFee = (
+  id: string,
+  options?: UseMutationOptions<Record<string, unknown>, Error, void>
+) => {
+  return useMutation({
+    mutationFn: () =>
+      fetchQuery(`/admin/service-fees/${id}/activate`, {
         method: "POST",
       }),
     onSuccess: (data, variables, context) => {
@@ -157,11 +163,11 @@ export const useDeactivateServiceFee = (
 
 export const useDeleteServiceFee = (
   id: string,
-  options?: UseMutationOptions<any, Error, void>
+  options?: UseMutationOptions<Record<string, unknown>, Error, void>
 ) => {
   return useMutation({
     mutationFn: () =>
-      fetchApi<any>(`/admin/service-fees/${id}`, {
+      fetchQuery(`/admin/service-fees/${id}`, {
         method: "DELETE",
       }),
     onSuccess: (data, variables, context) => {
@@ -176,13 +182,13 @@ export const useDeleteServiceFee = (
 
 export const useBatchServiceFeeRules = (
   id: string,
-  options?: UseMutationOptions<any, Error, any>
+  options?: UseMutationOptions<Record<string, unknown>, Error, BatchRulesPayload>
 ) => {
   return useMutation({
-    mutationFn: (payload: any) =>
-      fetchApi<any>(`/admin/service-fees/${id}/rules`, {
+    mutationFn: (payload: BatchRulesPayload) =>
+      fetchQuery(`/admin/service-fees/${id}/rules`, {
         method: "POST",
-        body: JSON.stringify(payload),
+        body: payload,
       }),
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({
@@ -196,5 +202,3 @@ export const useBatchServiceFeeRules = (
     ...options,
   })
 }
-
-declare const __BACKEND_URL__: string | undefined

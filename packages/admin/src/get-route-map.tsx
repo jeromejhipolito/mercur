@@ -1247,17 +1247,41 @@ export function getRouteMap({
                       import(
                         "./pages/service-fees/service-fee-list"
                       ),
-                  },
-                  {
-                    path: "create",
-                    lazy: () =>
-                      import(
-                        "./pages/service-fees/service-fee-create"
-                      ),
+                    children: [
+                      {
+                        path: "create",
+                        lazy: () =>
+                          import(
+                            "./pages/service-fees/service-fee-create"
+                          ),
+                      },
+                      {
+                        path: "global-fee-edit",
+                        lazy: () =>
+                          import(
+                            "./pages/service-fees/service-fee-list/components/edit-global-fee-drawer"
+                          ),
+                      },
+                    ],
                   },
                   {
                     path: ":id",
-                    element: <Outlet />,
+                    lazy: async () => {
+                      const { Breadcrumb, loader } =
+                        await import(
+                          "./pages/service-fees/service-fee-detail"
+                        );
+
+                      return {
+                        Component: Outlet,
+                        loader,
+                        handle: {
+                          breadcrumb: (match: UIMatch) => (
+                            <Breadcrumb {...match} />
+                          ),
+                        },
+                      };
+                    },
                     children: [
                       {
                         path: "",
@@ -1265,13 +1289,22 @@ export function getRouteMap({
                           import(
                             "./pages/service-fees/service-fee-detail"
                           ),
-                      },
-                      {
-                        path: "edit",
-                        lazy: () =>
-                          import(
-                            "./pages/service-fees/service-fee-edit"
-                          ),
+                        children: [
+                          {
+                            path: "edit",
+                            lazy: () =>
+                              import(
+                                "./pages/service-fees/service-fee-edit"
+                              ),
+                          },
+                          {
+                            path: "rules",
+                            lazy: () =>
+                              import(
+                                "./pages/service-fees/service-fee-manage-rules"
+                              ),
+                          },
+                        ],
                       },
                     ],
                   },

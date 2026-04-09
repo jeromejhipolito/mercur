@@ -10,6 +10,10 @@ export const createServiceFeeRulesStep = createStep(
     input: { service_fee_id: string; rules: CreateServiceFeeRuleDTO[] },
     { container }
   ) => {
+    if (!input.rules || input.rules.length === 0) {
+      return new StepResponse([], [])
+    }
+
     const service = container.resolve<ServiceFeeModuleService>(
       MercurModules.SERVICE_FEE
     )

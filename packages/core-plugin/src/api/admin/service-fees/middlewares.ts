@@ -81,6 +81,16 @@ export const adminServiceFeesMiddlewares: MiddlewareRoute[] = [
     ],
   },
   {
+    method: ["POST"],
+    matcher: "/admin/service-fees/:id/activate",
+    middlewares: [
+      validateAndTransformQuery(
+        AdminGetServiceFeeParams,
+        adminServiceFeeQueryConfig.retrieve
+      ),
+    ],
+  },
+  {
     method: ["GET"],
     matcher: "/admin/service-fees/:id/change-logs",
     middlewares: [

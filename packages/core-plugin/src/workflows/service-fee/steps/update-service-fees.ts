@@ -11,7 +11,7 @@ export const updateServiceFeesStep = createStep(
       MercurModules.SERVICE_FEE
     )
 
-    // Snapshot prior state for compensation rollback
+    // Snapshot prior state for compensation rollback AND audit log
     const previousStates = await Promise.all(
       input.map(async (dto) => {
         const [fee] = await service.listServiceFees({ id: dto.id })
@@ -20,7 +20,10 @@ export const updateServiceFeesStep = createStep(
     )
 
     const serviceFees = await service.updateServiceFees(input)
-    return new StepResponse(serviceFees, previousStates.filter(Boolean))
+    return new StepResponse(
+      { serviceFees, previousStates: previousStates.filter(Boolean) },
+      previousStates.filter(Boolean)
+    )
   },
   async (prevData, { container }) => {
     if (!prevData?.length) return

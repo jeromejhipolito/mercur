@@ -238,6 +238,39 @@ class ServiceFeeModuleService extends MedusaService({
   }
 
   @InjectManager()
+  async activateServiceFee(
+    id: string,
+    changedBy?: string,
+    @MedusaContext() sharedContext: Context = {}
+  ): Promise<ServiceFeeDTO> {
+    const [current] = await this.listServiceFees(
+      { id },
+      {},
+      sharedContext
+    )
+    const previousSnapshot = current
+      ? JSON.parse(JSON.stringify(current))
+      : null
+
+    const updated = await this.updateServiceFees(
+      [{ id, status: ServiceFeeStatus.ACTIVE, is_enabled: true }] as any,
+      sharedContext
+    )
+    const updatedFee = Array.isArray(updated) ? updated[0] : updated
+
+    await this.logChange(
+      id,
+      "activated",
+      changedBy ?? null,
+      previousSnapshot,
+      JSON.parse(JSON.stringify(updatedFee)),
+      sharedContext
+    )
+
+    return updatedFee as unknown as ServiceFeeDTO
+  }
+
+  @InjectManager()
   async activatePendingFees(
     @MedusaContext() sharedContext: Context = {}
   ): Promise<ServiceFeeDTO[]> {

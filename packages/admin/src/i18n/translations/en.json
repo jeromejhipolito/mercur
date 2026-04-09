@@ -3481,5 +3481,137 @@
   },
   "commissionLines": {
     "domain": "Commission Lines"
+  },
+  "serviceFees": {
+    "title": "Service Fees",
+    "subtitle": "Manage service fee rules for your marketplace",
+    "stackableNote": "Note: Service fees are stackable. Multiple active fees can apply to an order.",
+    "createNewFee": "Create New Fee",
+    "createTitle": "Create New Service Fee",
+    "createSubtitle": "Set up a new service fee for your marketplace",
+    "editTitle": "Edit Service Fee",
+    "editSubtitle": "Update service fee configuration",
+    "globalFee": {
+      "title": "Global Service Fee",
+      "badge": "Global Fee",
+      "editTitle": "Edit Global Service Fee",
+      "ruleId": "Rule ID",
+      "rate": "Service Fee Rate",
+      "displayName": "Display Name to Seller",
+      "effectiveDate": "Effective Date",
+      "effectiveDateHint": "If set to a future date, the current global fee remains active until then.",
+      "importantNotice": "Editing the global fee will create a new fee rule and deactivate the current one. The change will be effective on the selected date.",
+      "noActiveGlobalFee": "No active global fee configured",
+      "noActiveGlobalFeeFound": "No active global fee found.",
+      "important": "Important"
+    },
+    "fields": {
+      "feeName": "Fee Name",
+      "feeNameHint": "Internal name for this service fee",
+      "displayName": "Display Name to Seller",
+      "displayNameHint": "This name will be shown to sellers in their dashboard",
+      "chargingLevel": "Charging Level",
+      "chargingLevelImmutable": "Charging level cannot be changed after creation",
+      "itemLevel": "Item Level",
+      "shopLevel": "Shop Level",
+      "rate": "Service Fee Rate (%)",
+      "period": "Period",
+      "setCustomPeriod": "Set Custom Period",
+      "setCustomPeriodHint": "Define a specific date range for this fee",
+      "noPeriod": "This fee has no custom period and will remain active indefinitely.",
+      "startDate": "Start Date",
+      "startDateHint": "Must be a future date",
+      "endDate": "End Date",
+      "endDateHint": "Leave empty for indefinite period",
+      "createdDate": "Created Date",
+      "status": "Status"
+    },
+    "shopSelection": {
+      "title": "Shop Selection",
+      "method": "Shop Selection Method",
+      "allShops": "All Shops",
+      "uploadIds": "Upload Shop IDs",
+      "shopGroups": "Shop Groups",
+      "allShopsHint": "This service fee will apply to all shops in the marketplace.",
+      "selectedShopsHint": "Service fee will apply to selected shops only",
+      "shopGroupsHint": "Service fee will apply to selected shop groups only",
+      "selectShop": "Select shop",
+      "addShop": "+ Add Another Shop",
+      "addShopGroup": "+ Add Shop Group",
+      "selectShopGroup": "Select shop group",
+      "noShopsSelected": "No shops selected yet",
+      "noGroupsSelected": "No shop groups selected yet",
+      "comingSoon": "Coming soon"
+    },
+    "detail": {
+      "basicInfo": "Basic Information",
+      "shownInSellerCenter": "Shown in seller center",
+      "feeId": "Fee ID",
+      "notSet": "Not Set"
+    },
+    "changeLogs": {
+      "title": "Change Logs",
+      "noChanges": "No changes recorded yet"
+    },
+    "actions": {
+      "createFee": "Create Service Fee",
+      "saveChanges": "Save Changes",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "deactivateFee": "Deactivate Fee",
+      "editFee": "Edit Fee"
+    },
+    "activatePrompt": {
+      "title": "Activate Service Fee",
+      "description": "Are you sure you want to activate this service fee? It will start applying to new orders."
+    },
+    "deactivatePrompt": {
+      "title": "Deactivate Service Fee",
+      "description": "Are you sure you want to deactivate this service fee? It will no longer apply to new orders."
+    },
+    "validation": {
+      "nameRequired": "Fee name is required",
+      "displayNameRequired": "Display name is required",
+      "rateRequired": "Rate is required",
+      "rateMin": "Must be greater than 0",
+      "rateMax": "Cannot exceed 100%",
+      "startDateRequired": "Start date is required when custom period is enabled",
+      "effectiveDateRequired": "Effective date is required"
+    },
+    "notes": {
+      "stackable": "Note: Service fees are stackable and can be combined with other active fees.",
+      "immediateEffect": "Note: Changes will take effect immediately for future transactions."
+    },
+    "toast": {
+      "created": "Service fee created successfully",
+      "updated": "Service fee updated successfully",
+      "activated": "Fee activated",
+      "deactivated": "Fee deactivated",
+      "rulesUpdated": "Targeting rules updated successfully",
+      "updateFailed": "Failed to update",
+      "deactivateFailed": "Failed to deactivate"
+    },
+    "rules": {
+      "title": "Targeting Rules",
+      "byProduct": "By Product",
+      "bySeller": "By Seller",
+      "productCategory": "Product Category",
+      "productType": "Product Type",
+      "productCollection": "Product Collection",
+      "specificProduct": "Specific Product",
+      "seller": "Seller",
+      "include": "Include",
+      "exclude": "Exclude",
+      "mode": "Mode",
+      "selectType": "Select type",
+      "selectValue": "Select value",
+      "selectTypeFirst": "Select a type first",
+      "addRule": "Add Rule",
+      "emptyState": "No targeting rules configured. This fee applies universally.",
+      "precedenceTooltip": "Exclude rules take priority over include rules.",
+      "manageRules": "Manage Rules",
+      "rulesCount": "{{count}} targeting rule(s) configured",
+      "noRules": "No targeting rules"
+    }
   }
 }

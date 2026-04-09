@@ -1,271 +1,325 @@
-import { useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import {
   Badge,
   Button,
   Container,
   Heading,
-  Prompt,
+  StatusBadge,
   Text,
   toast,
+  usePrompt,
 } from "@medusajs/ui"
-import { PencilSquare } from "@medusajs/icons"
+import { PencilSquare, XCircle, CheckCircleSolid } from "@medusajs/icons"
+import { useTranslation } from "react-i18next"
+
+import { ActionMenu } from "../../../components/common/action-menu"
+import { SectionRow } from "../../../components/common/section/section-row"
+import { TwoColumnPage } from "../../../components/layout/pages"
 import {
   useServiceFee,
   useServiceFeeChangeLogs,
   useDeactivateServiceFee,
+  useActivateServiceFee,
 } from "../../../hooks/api/service-fees"
+import { RuleDisplayName } from "../components/rule-display-name"
+import { RULE_REFERENCE_TYPES } from "../constants"
+import type { ServiceFee, ServiceFeeRule, ChangeLog } from "../types"
 
-const statusColorMap: Record<string, string> = {
+const formatDate = (date: string | null | undefined) => {
+  if (!date) return "Not Set"
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })
+}
+
+const statusColorMap: Record<string, "green" | "blue" | "grey"> = {
   active: "green",
   pending: "blue",
   inactive: "grey",
 }
 
+const getReferenceLabel = (reference: string): string => {
+  const found = RULE_REFERENCE_TYPES.find((r) => r.value === reference)
+  return found ? found.label : reference
+}
+
+const DetailSkeleton = () => (
+  <div className="flex h-[400px] w-full items-center justify-center">
+    <div className="animate-pulse space-y-4">
+      <div className="h-8 bg-ui-bg-switch-off rounded w-1/3" />
+      <div className="h-40 bg-ui-bg-switch-off rounded" />
+    </div>
+  </div>
+)
+
 export const ServiceFeeDetailPage = () => {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
 
-  const { service_fee, isLoading } = useServiceFee(id!)
+  const { service_fee, isLoading, isError, error } = useServiceFee(id!)
   const { change_logs } = useServiceFeeChangeLogs(id!)
-  const deactivateMutation = useDeactivateServiceFee(id!)
-  const [showDeactivatePrompt, setShowDeactivatePrompt] = useState(false)
 
-  const handleDeactivate = async () => {
+  if (isError) {
+    throw error
+  }
+
+  const ready = !isLoading && !!service_fee
+
+  return (
+    <TwoColumnPage data={service_fee ?? {}} hasOutlet showJSON>
+      <TwoColumnPage.Main>
+        {!ready ? (
+          <DetailSkeleton />
+        ) : (
+          <>
+            {/* Basic Information */}
+            <Container className="divide-y p-0">
+              <div className="flex items-center justify-between px-6 py-4">
+                <Heading>{t("serviceFees.detail.basicInfo")}</Heading>
+                <div className="flex items-center gap-4">
+                  <StatusBadge
+                    color={statusColorMap[service_fee.status] ?? "grey"}
+                  >
+                    {service_fee.status?.charAt(0).toUpperCase() +
+                      service_fee.status?.slice(1)}
+                  </StatusBadge>
+                  <ServiceFeeActions serviceFee={service_fee} />
+                </div>
+              </div>
+              <SectionRow title={t("serviceFees.fields.feeName")} value={service_fee.name} />
+              <SectionRow
+                title={t("serviceFees.fields.displayName")}
+                value={service_fee.display_name}
+              />
+              <SectionRow
+                title={t("serviceFees.fields.chargingLevel")}
+                value={
+                  <Badge size="2xsmall" className="capitalize">
+                    {service_fee.charging_level}
+                  </Badge>
+                }
+              />
+              <SectionRow
+                title={t("serviceFees.globalFee.rate")}
+                value={`${service_fee.value}%`}
+              />
+              <SectionRow
+                title={t("serviceFees.fields.createdDate")}
+                value={formatDate(service_fee.created_at)}
+              />
+            </Container>
+
+            {/* Period */}
+            <Container className="divide-y p-0">
+              <div className="flex items-center justify-between px-6 py-4">
+                <Heading>{t("serviceFees.fields.period")}</Heading>
+              </div>
+              <SectionRow
+                title={t("serviceFees.fields.startDate")}
+                value={formatDate(service_fee.start_date)}
+              />
+              <SectionRow
+                title={t("serviceFees.fields.endDate")}
+                value={formatDate(service_fee.end_date)}
+              />
+              {!service_fee.start_date && !service_fee.end_date && (
+                <div className="px-6 py-4">
+                  <div className="rounded-lg bg-ui-bg-subtle border border-ui-border-base p-3">
+                    <Text className="text-ui-fg-subtle text-sm">
+                      {t("serviceFees.fields.noPeriod")}
+                    </Text>
+                  </div>
+                </div>
+              )}
+            </Container>
+
+            {/* Targeting Rules */}
+            <Container className="divide-y p-0">
+              <div className="flex items-center justify-between px-6 py-4">
+                <Heading>{t("serviceFees.rules.title")}</Heading>
+                <Link to={`/settings/service-fees/${service_fee.id}/rules`}>
+                  <Button variant="secondary" size="small">
+                    {t("serviceFees.rules.manageRules")}
+                  </Button>
+                </Link>
+              </div>
+              {service_fee.rules?.length > 0 ? (
+                <div className="px-6 py-4">
+                  <div className="flex flex-col gap-y-2">
+                    {service_fee.rules.map((rule: ServiceFeeRule) => (
+                      <div
+                        key={rule.id}
+                        className="flex items-center gap-x-3 rounded-lg border border-ui-border-base p-3"
+                      >
+                        <Badge
+                          color={rule.mode === "exclude" ? "red" : "green"}
+                          size="xsmall"
+                        >
+                          {rule.mode === "exclude"
+                            ? t("serviceFees.rules.exclude")
+                            : t("serviceFees.rules.include")}
+                        </Badge>
+                        <Text size="small" className="text-ui-fg-subtle">
+                          {t(getReferenceLabel(rule.reference))}
+                        </Text>
+                        <Text size="small" weight="plus">
+                          <RuleDisplayName
+                            reference={rule.reference}
+                            reference_id={rule.reference_id}
+                          />
+                        </Text>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="px-6 py-4">
+                  <Text className="text-ui-fg-subtle text-sm">
+                    {t("serviceFees.rules.emptyState")}
+                  </Text>
+                </div>
+              )}
+            </Container>
+          </>
+        )}
+      </TwoColumnPage.Main>
+
+      <TwoColumnPage.Sidebar>
+        {!ready ? (
+          <DetailSkeleton />
+        ) : (
+          <Container className="p-0">
+            <div className="px-6 py-4">
+              <Heading>{t("serviceFees.changeLogs.title")}</Heading>
+            </div>
+            <div className="px-6 pb-4">
+              {change_logs && change_logs.length > 0 ? (
+                <div className="space-y-0">
+                  {change_logs.map((log: ChangeLog, i: number) => (
+                    <div key={log.id} className="relative pl-6 pb-6">
+                      {i < change_logs.length - 1 && (
+                        <div className="absolute left-[9px] top-4 bottom-0 w-px bg-ui-border-base" />
+                      )}
+                      <div className="absolute left-0 top-1 w-[18px] h-[18px] rounded-full bg-ui-bg-interactive border-2 border-ui-border-interactive" />
+                      <div>
+                        <Text className="font-medium text-sm capitalize">
+                          {log.action?.replace(/_/g, " ")}
+                        </Text>
+                        <Text className="text-ui-fg-subtle text-xs">
+                          {log.new_snapshot?.description ??
+                            `${log.action} service fee`}
+                        </Text>
+                        <Text className="text-ui-fg-muted text-xs mt-1">
+                          {new Date(log.created_at).toLocaleString()}
+                        </Text>
+                        {log.changed_by && (
+                          <Text className="text-ui-fg-muted text-xs">
+                            by {log.changed_by}
+                          </Text>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <Text className="text-ui-fg-subtle text-sm">
+                  {t("serviceFees.changeLogs.noChanges")}
+                </Text>
+              )}
+            </div>
+          </Container>
+        )}
+      </TwoColumnPage.Sidebar>
+    </TwoColumnPage>
+  )
+}
+
+// Action menu for the detail page
+const ServiceFeeActions = ({ serviceFee }: { serviceFee: ServiceFee }) => {
+  const { t } = useTranslation()
+  const prompt = usePrompt()
+  const { mutateAsync: deactivate } = useDeactivateServiceFee(serviceFee.id)
+  const { mutateAsync: activate } = useActivateServiceFee(serviceFee.id)
+
+  const handleActivate = async () => {
+    const res = await prompt({
+      title: t("serviceFees.activatePrompt.title"),
+      description: t("serviceFees.activatePrompt.description"),
+      confirmText: t("serviceFees.actions.activate"),
+      cancelText: t("actions.cancel"),
+    })
+
+    if (!res) {
+      return
+    }
+
     try {
-      await deactivateMutation.mutateAsync()
-      toast.success("Fee deactivated")
-      setShowDeactivatePrompt(false)
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to deactivate")
+      await activate()
+      toast.success(t("serviceFees.toast.activated"))
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to activate"
+      toast.error(message)
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="max-w-[1200px] mx-auto py-8 px-4">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-ui-bg-switch-off rounded w-1/3" />
-          <div className="h-40 bg-ui-bg-switch-off rounded" />
-        </div>
-      </div>
-    )
+  const handleDeactivate = async () => {
+    const res = await prompt({
+      title: t("serviceFees.deactivatePrompt.title"),
+      description: t("serviceFees.deactivatePrompt.description"),
+      confirmText: t("serviceFees.actions.deactivate"),
+      cancelText: t("actions.cancel"),
+    })
+
+    if (!res) {
+      return
+    }
+
+    try {
+      await deactivate()
+      toast.success(t("serviceFees.toast.deactivated"))
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Failed to deactivate"
+      toast.error(message)
+    }
   }
 
-  if (!service_fee) {
-    return (
-      <div className="max-w-[1200px] mx-auto py-8 px-4">
-        <Text>Service fee not found</Text>
-      </div>
-    )
+  const groups: Parameters<typeof ActionMenu>[0]["groups"] = [
+    {
+      actions: [
+        {
+          icon: <PencilSquare />,
+          label: t("serviceFees.actions.editFee"),
+          to: `/settings/service-fees/${serviceFee.id}/edit`,
+        },
+      ],
+    },
+  ]
+
+  if (serviceFee.status !== "inactive") {
+    groups.push({
+      actions: [
+        {
+          icon: <XCircle />,
+          label: t("serviceFees.actions.deactivate"),
+          onClick: handleDeactivate,
+        },
+      ],
+    })
   }
 
-  return (
-    <div className="max-w-[1200px] mx-auto py-8 px-4">
-      <div className="mb-4">
-        <Button variant="transparent" onClick={() => navigate("/settings/service-fees")}>
-          &larr; Back to Service Fees
-        </Button>
-      </div>
+  if (serviceFee.status === "inactive") {
+    groups.push({
+      actions: [
+        {
+          icon: <CheckCircleSolid />,
+          label: t("serviceFees.actions.activate"),
+          onClick: handleActivate,
+        },
+      ],
+    })
+  }
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Heading level="h1">{service_fee.name}</Heading>
-          <Badge
-            color={statusColorMap[service_fee.status] as any ?? "grey"}
-            size="small"
-          >
-            {service_fee.status?.charAt(0).toUpperCase() +
-              service_fee.status?.slice(1)}
-          </Badge>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="danger" onClick={() => setShowDeactivatePrompt(true)}>
-            Deactivate
-          </Button>
-          <Prompt open={showDeactivatePrompt} onOpenChange={setShowDeactivatePrompt}>
-            <Prompt.Content>
-              <Prompt.Header>
-                <Prompt.Title>Deactivate Service Fee</Prompt.Title>
-                <Prompt.Description>
-                  Are you sure you want to deactivate this service fee? It will no longer apply to new orders.
-                </Prompt.Description>
-              </Prompt.Header>
-              <Prompt.Footer>
-                <Prompt.Cancel>Cancel</Prompt.Cancel>
-                <Prompt.Action onClick={handleDeactivate}>
-                  Deactivate
-                </Prompt.Action>
-              </Prompt.Footer>
-            </Prompt.Content>
-          </Prompt>
-          <Button onClick={() => navigate(`/settings/service-fees/${id}/edit`)}>
-            <PencilSquare />
-            Edit Fee
-          </Button>
-        </div>
-      </div>
-
-      <Text className="text-ui-fg-subtle mb-6">
-        Fee ID: #{service_fee.id}
-      </Text>
-
-      <div className="grid grid-cols-[1fr_350px] gap-6">
-        {/* Left Column */}
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <Container>
-            <Heading level="h2" className="mb-4">
-              Basic Information
-            </Heading>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Text className="text-ui-fg-subtle text-xs">Fee Name</Text>
-                <Text className="font-medium">{service_fee.name}</Text>
-              </div>
-              <div>
-                <Text className="text-ui-fg-subtle text-xs">
-                  Display Name to Seller
-                </Text>
-                <Text className="font-medium">{service_fee.display_name}</Text>
-                <Text className="text-ui-fg-subtle text-xs">
-                  Shown in seller center
-                </Text>
-              </div>
-              <div>
-                <Text className="text-ui-fg-subtle text-xs">
-                  Charging Level
-                </Text>
-                <Text className="font-medium capitalize">
-                  {service_fee.charging_level}
-                </Text>
-              </div>
-              <div>
-                <Text className="text-ui-fg-subtle text-xs">
-                  Service Fee Rate
-                </Text>
-                <Text className="font-medium text-ui-fg-interactive">
-                  {service_fee.value}%
-                </Text>
-              </div>
-              <div>
-                <Text className="text-ui-fg-subtle text-xs">Created Date</Text>
-                <Text className="font-medium">
-                  {new Date(service_fee.created_at).toLocaleDateString()}
-                </Text>
-              </div>
-            </div>
-          </Container>
-
-          {/* Period */}
-          <Container>
-            <Heading level="h2" className="mb-4">
-              Period
-            </Heading>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Text className="text-ui-fg-subtle text-xs">Start Date</Text>
-                <Text className="font-medium">
-                  {service_fee.start_date
-                    ? new Date(service_fee.start_date).toLocaleDateString()
-                    : "Not Set"}
-                </Text>
-              </div>
-              <div>
-                <Text className="text-ui-fg-subtle text-xs">End Date</Text>
-                <Text className="font-medium">
-                  {service_fee.end_date
-                    ? new Date(service_fee.end_date).toLocaleDateString()
-                    : "Not Set"}
-                </Text>
-              </div>
-            </div>
-            {!service_fee.start_date && !service_fee.end_date && (
-              <div className="rounded-lg bg-ui-bg-subtle border border-ui-border-base p-3 mt-4">
-                <Text className="text-ui-fg-subtle text-sm">
-                  This fee has no custom period and will remain active
-                  indefinitely.
-                </Text>
-              </div>
-            )}
-          </Container>
-
-          {/* Item Eligibility (if applicable) */}
-          {service_fee.charging_level === "item" &&
-            service_fee.rules?.length > 0 && (
-              <Container>
-                <Heading level="h2" className="mb-4">
-                  Item Eligibility
-                </Heading>
-                <div className="space-y-2">
-                  <Text className="text-ui-fg-subtle text-xs">
-                    Eligibility Type
-                  </Text>
-                  <Text className="font-medium">Categories</Text>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Text className="text-ui-fg-subtle text-xs">
-                      Selected Categories
-                    </Text>
-                    <Badge color="blue" size="xsmall">
-                      Include
-                    </Badge>
-                  </div>
-                  <div className="flex gap-2 flex-wrap mt-2">
-                    {service_fee.rules.map((rule: any) => (
-                      <Badge key={rule.id} color="grey" size="small">
-                        {rule.reference_id}
-                      </Badge>
-                    ))}
-                  </div>
-                  <Text className="text-ui-fg-subtle text-xs mt-2">
-                    Service fee applies only to the categories listed above
-                  </Text>
-                </div>
-              </Container>
-            )}
-        </div>
-
-        {/* Right Column - Change Logs */}
-        <Container>
-          <Heading level="h2" className="mb-4">
-            Change Logs
-          </Heading>
-          {change_logs && change_logs.length > 0 ? (
-            <div className="space-y-0">
-              {change_logs.map((log: any, i: number) => (
-                <div key={log.id} className="relative pl-6 pb-6">
-                  {i < change_logs.length - 1 && (
-                    <div className="absolute left-[9px] top-4 bottom-0 w-px bg-ui-border-base" />
-                  )}
-                  <div className="absolute left-0 top-1 w-[18px] h-[18px] rounded-full bg-ui-bg-interactive border-2 border-ui-border-interactive" />
-                  <div>
-                    <Text className="font-medium text-sm capitalize">
-                      {log.action?.replace(/_/g, " ")}
-                    </Text>
-                    <Text className="text-ui-fg-subtle text-xs">
-                      {log.new_snapshot?.description ??
-                        `${log.action} service fee`}
-                    </Text>
-                    <Text className="text-ui-fg-muted text-xs mt-1">
-                      {new Date(log.created_at).toLocaleString()}
-                    </Text>
-                    {log.changed_by && (
-                      <Text className="text-ui-fg-muted text-xs">
-                        by {log.changed_by}
-                      </Text>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <Text className="text-ui-fg-subtle text-sm">
-              No changes recorded yet
-            </Text>
-          )}
-        </Container>
-      </div>
-    </div>
-  )
+  return <ActionMenu groups={groups} />
 }

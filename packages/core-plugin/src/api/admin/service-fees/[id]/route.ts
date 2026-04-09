@@ -35,7 +35,10 @@ export const POST = async (
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY)
 
   await updateServiceFeesWorkflow(req.scope).run({
-    input: [{ id: req.params.id, ...req.validatedBody }],
+    input: {
+      data: [{ id: req.params.id, ...req.validatedBody }],
+      changed_by: req.auth_context?.actor_id,
+    },
   })
 
   const {

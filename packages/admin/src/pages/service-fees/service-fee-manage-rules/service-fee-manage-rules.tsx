@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next"
 
 import { RouteDrawer } from "../../../components/modals"
 import { useServiceFee } from "../../../hooks/api/service-fees"
-import { EditServiceFeeForm } from "./components/edit-service-fee-form"
+import { ManageRulesForm } from "../service-fee-detail/components/manage-rules-drawer"
 
-export const ServiceFeeEditPage = () => {
+export const ServiceFeeManageRulesPage = () => {
   const { t } = useTranslation()
   const { id } = useParams()
 
@@ -24,10 +24,13 @@ export const ServiceFeeEditPage = () => {
   return (
     <RouteDrawer>
       <RouteDrawer.Header>
-        <Heading>{t("serviceFees.editTitle")}</Heading>
+        <Heading>{t("serviceFees.rules.manageRules")}</Heading>
       </RouteDrawer.Header>
       {!isLoading && service_fee && (
-        <EditServiceFeeForm serviceFee={service_fee} />
+        <ManageRulesForm
+          serviceFeeId={service_fee.id}
+          existingRules={service_fee.rules ?? []}
+        />
       )}
     </RouteDrawer>
   )

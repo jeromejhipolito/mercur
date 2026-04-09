@@ -1,61 +1,56 @@
 import {
   WorkflowResponse,
   createWorkflow,
-  createStep,
-  StepResponse,
   transform,
 } from "@medusajs/framework/workflows-sdk"
-import { UpdateServiceFeeDTO, MercurModules } from "@mercurjs/types"
-import ServiceFeeModuleService from "../../../modules/service-fee/service"
+import { UpdateServiceFeeDTO } from "@mercurjs/types"
 
 import { updateServiceFeesStep } from "../steps/update-service-fees"
 import { logServiceFeeChangeStep } from "../steps/log-service-fee-change"
 
-const fetchPriorStateStepId = "fetch-prior-state-step"
-const fetchPriorStateStep = createStep(
-  fetchPriorStateStepId,
-  async (input: UpdateServiceFeeDTO[], { container }) => {
-    const service = container.resolve<ServiceFeeModuleService>(
-      MercurModules.SERVICE_FEE
-    )
-    const priorStates = await Promise.all(
-      input.map(async (dto) => {
-        const [fee] = await service.listServiceFees({ id: dto.id })
-        return fee ? JSON.parse(JSON.stringify(fee)) : null
-      })
-    )
-    return new StepResponse(priorStates.filter(Boolean))
-  }
-)
+export type UpdateServiceFeesWorkflowInput = {
+  data: UpdateServiceFeeDTO[]
+  changed_by?: string | null
+}
 
 export const updateServiceFeesWorkflowId = "update-service-fees"
 
 export const updateServiceFeesWorkflow = createWorkflow(
   updateServiceFeesWorkflowId,
-  function (input: UpdateServiceFeeDTO[]) {
-    const priorStates = fetchPriorStateStep(input)
-    const serviceFees = updateServiceFeesStep(input)
+  function (input: UpdateServiceFeesWorkflowInput) {
+    const updateResult = updateServiceFeesStep(input.data)
 
     const logInput = transform(
-      { serviceFees, priorStates, input },
+      { updateResult, input },
       (data) => {
-        const fee = Array.isArray(data.serviceFees)
-          ? data.serviceFees[0]
-          : data.serviceFees
-        const prior = Array.isArray(data.priorStates)
-          ? data.priorStates[0]
-          : data.priorStates
+        const { serviceFees, previousStates } = data.updateResult
+        const fee = Array.isArray(serviceFees)
+          ? serviceFees[0]
+          : serviceFees
+        const prior = Array.isArray(previousStates)
+          ? previousStates[0]
+          : previousStates
+
+        let newSnapshot: Record<string, unknown> | null = null
+        try {
+          newSnapshot = fee ? JSON.parse(JSON.stringify(fee)) : null
+        } catch {
+          newSnapshot = fee ? { id: fee.id, name: fee.name } : null
+        }
+
         return {
-          service_fee_id: fee?.id ?? data.input[0]?.id ?? "",
+          service_fee_id: fee?.id ?? data.input.data[0]?.id ?? "",
           action: "updated",
-          changed_by: null,
+          changed_by: data.input.changed_by ?? null,
           previous_snapshot: prior ?? null,
-          new_snapshot: fee ? JSON.parse(JSON.stringify(fee)) : null,
+          new_snapshot: newSnapshot,
         }
       }
     )
 
     logServiceFeeChangeStep(logInput)
+
+    const serviceFees = transform(updateResult, (data) => data.serviceFees)
 
     return new WorkflowResponse(serviceFees)
   }
