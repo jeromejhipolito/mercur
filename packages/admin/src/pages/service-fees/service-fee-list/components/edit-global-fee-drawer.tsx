@@ -216,6 +216,22 @@ export const EditGlobalFeeDrawer = () => {
       <RouteDrawer.Header>
         <Heading>{t("serviceFees.globalFee.editTitle")}</Heading>
       </RouteDrawer.Header>
+      {isLoading && (
+        <RouteDrawer.Body>
+          <div className="flex flex-col gap-y-4">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-ui-bg-switch-off rounded w-1/4" />
+              <div className="h-10 bg-ui-bg-switch-off rounded" />
+              <div className="h-4 bg-ui-bg-switch-off rounded w-1/4" />
+              <div className="h-10 bg-ui-bg-switch-off rounded" />
+              <div className="h-4 bg-ui-bg-switch-off rounded w-1/4" />
+              <div className="h-10 bg-ui-bg-switch-off rounded" />
+              <div className="h-4 bg-ui-bg-switch-off rounded w-1/4" />
+              <div className="h-10 bg-ui-bg-switch-off rounded" />
+            </div>
+          </div>
+        </RouteDrawer.Body>
+      )}
       {!isLoading && globalFee && <EditGlobalFeeForm fee={globalFee} />}
       {!isLoading && !globalFee && (
         <RouteDrawer.Body>

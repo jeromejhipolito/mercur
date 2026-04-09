@@ -10,6 +10,7 @@ export const ServiceFeeListPage = () => {
   const { t } = useTranslation()
 
   return (
+    <div data-testid="service-fee-list-page">
     <SingleColumnPage>
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -35,5 +36,6 @@ export const ServiceFeeListPage = () => {
       <GlobalFeeSummaryCard />
       <ServiceFeeListTable />
     </SingleColumnPage>
+    </div>
   )
 }

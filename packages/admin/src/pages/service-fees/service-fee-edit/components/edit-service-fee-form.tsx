@@ -80,7 +80,7 @@ export const EditServiceFeeForm = ({
       toast.success(t("serviceFees.toast.updated"))
       handleSuccess()
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to update"
+      const message = e instanceof Error ? e.message : t("serviceFees.toast.updateFailed")
       toast.error(message)
     }
   })
@@ -92,6 +92,7 @@ export const EditServiceFeeForm = ({
       <KeyboundForm
         className="flex flex-1 flex-col overflow-hidden"
         onSubmit={handleSubmit}
+        data-testid="service-fee-edit-form"
       >
         <RouteDrawer.Body className="flex flex-1 flex-col gap-y-6 overflow-auto">
           <div className="grid grid-cols-1 gap-4">
@@ -123,24 +124,24 @@ export const EditServiceFeeForm = ({
             />
 
             {/* Charging Level - read only */}
-            <div>
-              <Text size="small" weight="plus" className="mb-1">
-                {t("serviceFees.fields.chargingLevel")}
-              </Text>
-              <Input
-                value={
-                  serviceFee?.charging_level
-                    ? serviceFee.charging_level.charAt(0).toUpperCase() +
-                      serviceFee.charging_level.slice(1) +
-                      " Level"
-                    : ""
-                }
-                disabled
-              />
-              <Text size="small" className="text-ui-fg-subtle mt-1">
+            <Form.Item>
+              <Form.Label>{t("serviceFees.fields.chargingLevel")}</Form.Label>
+              <Form.Control>
+                <Input
+                  value={
+                    serviceFee?.charging_level
+                      ? serviceFee.charging_level.charAt(0).toUpperCase() +
+                        serviceFee.charging_level.slice(1) +
+                        " Level"
+                      : ""
+                  }
+                  disabled
+                />
+              </Form.Control>
+              <Form.Hint>
                 {t("serviceFees.fields.chargingLevelImmutable")}
-              </Text>
-            </div>
+              </Form.Hint>
+            </Form.Item>
 
             <Form.Field
               control={form.control}

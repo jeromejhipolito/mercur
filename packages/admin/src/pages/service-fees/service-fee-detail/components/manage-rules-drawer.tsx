@@ -123,7 +123,7 @@ export const ManageRulesForm = ({
       toast.success(t("serviceFees.toast.rulesUpdated"))
       handleSuccess()
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to update rules"
+      const message = e instanceof Error ? e.message : t("serviceFees.toast.rulesUpdateFailed")
       toast.error(message)
     }
   })

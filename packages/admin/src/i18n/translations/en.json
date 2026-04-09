@@ -3593,6 +3593,8 @@
       "deactivated": "Fee deactivated",
       "rulesUpdated": "Targeting rules updated successfully",
       "updateFailed": "Failed to update",
+      "createFailed": "Failed to create service fee",
+      "rulesUpdateFailed": "Failed to update rules",
       "activateFailed": "Failed to activate",
       "deactivateFailed": "Failed to deactivate"
     },

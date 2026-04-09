@@ -68,6 +68,7 @@ export const ServiceFeeDetailPage = () => {
   const ready = !isLoading && !!service_fee
 
   return (
+    <div data-testid="service-fee-detail-page">
     <TwoColumnPage data={service_fee ?? {}} hasOutlet showJSON>
       <TwoColumnPage.Main>
         {!ready ? (
@@ -233,6 +234,7 @@ export const ServiceFeeDetailPage = () => {
         )}
       </TwoColumnPage.Sidebar>
     </TwoColumnPage>
+    </div>
   )
 }
 

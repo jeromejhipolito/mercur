@@ -171,7 +171,7 @@ export const CreateServiceFeeForm = () => {
         handleSuccess(`../${service_fee?.id ?? ""}`)
       },
       onError: (e) => {
-        toast.error(e?.message ?? "Failed to create service fee")
+        toast.error(e?.message ?? t("serviceFees.toast.createFailed"))
       },
     })
   })
@@ -185,6 +185,7 @@ export const CreateServiceFeeForm = () => {
       <KeyboundForm
         className="flex h-full flex-col overflow-hidden"
         onSubmit={handleSubmit}
+        data-testid="service-fee-create-form"
       >
         <RouteFocusModal.Header />
         <RouteFocusModal.Body className="flex overflow-hidden">
