@@ -78,7 +78,7 @@ export const ServiceFeeDetailPage = () => {
             {/* Basic Information */}
             <Container className="divide-y p-0">
               <div className="flex items-center justify-between px-6 py-4">
-                <Heading>{t("serviceFees.detail.basicInfo")}</Heading>
+                <Heading level="h2">{t("serviceFees.detail.basicInfo")}</Heading>
                 <div className="flex items-center gap-4">
                   <StatusBadge
                     color={statusColorMap[service_fee.status] ?? "grey"}
@@ -115,7 +115,7 @@ export const ServiceFeeDetailPage = () => {
             {/* Period */}
             <Container className="divide-y p-0">
               <div className="flex items-center justify-between px-6 py-4">
-                <Heading>{t("serviceFees.fields.period")}</Heading>
+                <Heading level="h2">{t("serviceFees.fields.period")}</Heading>
               </div>
               <SectionRow
                 title={t("serviceFees.fields.startDate")}
@@ -139,7 +139,7 @@ export const ServiceFeeDetailPage = () => {
             {/* Targeting Rules */}
             <Container className="divide-y p-0">
               <div className="flex items-center justify-between px-6 py-4">
-                <Heading>{t("serviceFees.rules.title")}</Heading>
+                <Heading level="h2">{t("serviceFees.rules.title")}</Heading>
                 <Link to={`/settings/service-fees/${service_fee.id}/rules`}>
                   <Button variant="secondary" size="small">
                     {t("serviceFees.rules.manageRules")}
@@ -193,7 +193,7 @@ export const ServiceFeeDetailPage = () => {
         ) : (
           <Container className="p-0">
             <div className="px-6 py-4">
-              <Heading>{t("serviceFees.changeLogs.title")}</Heading>
+              <Heading level="h2">{t("serviceFees.changeLogs.title")}</Heading>
             </div>
             <div className="px-6 pb-4">
               {change_logs && change_logs.length > 0 ? (
