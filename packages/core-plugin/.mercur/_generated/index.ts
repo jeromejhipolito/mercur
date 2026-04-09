@@ -453,6 +453,7 @@ export type Routes = {
         };
         serviceFees: typeof import("../../src/api/admin/service-fees/route") & {
             $id: typeof import("../../src/api/admin/service-fees/[id]/route") & {
+                activate: typeof import("../../src/api/admin/service-fees/[id]/activate/route");
                 changeLogs: typeof import("../../src/api/admin/service-fees/[id]/change-logs/route");
                 deactivate: typeof import("../../src/api/admin/service-fees/[id]/deactivate/route");
                 rules: typeof import("../../src/api/admin/service-fees/[id]/rules/route");

@@ -8,6 +8,16 @@ export default defineConfig({
     react(),
     mercurDashboardPlugin({
       medusaConfigPath: '../../packages/api/medusa-config.ts',
+      backendUrl: 'http://localhost:7001',
     }),
   ],
+  server: {
+    proxy: {
+      '/admin': 'http://localhost:9001',
+      '/auth': 'http://localhost:9001',
+      '/store': 'http://localhost:9001',
+      '/vendor': 'http://localhost:9001',
+      '/health': 'http://localhost:9001',
+    },
+  },
 })
