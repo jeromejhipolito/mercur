@@ -180,6 +180,7 @@ const EditGlobalFeeForm = ({ fee }: { fee: ServiceFee }) => {
               type="button"
               onClick={handleDeactivate}
               disabled={isDeactivating}
+              isLoading={isDeactivating}
             >
               {t("serviceFees.actions.deactivateFee")}
             </Button>

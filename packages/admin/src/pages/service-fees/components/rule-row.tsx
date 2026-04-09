@@ -1,8 +1,9 @@
 import { IconButton, Select } from "@medusajs/ui"
 import { Trash } from "@medusajs/icons"
-import { Controller, type Control, type UseFormReturn } from "react-hook-form"
+import { type Control, type UseFormReturn } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 
+import { Form } from "../../../components/common/form"
 import { useProductCategories } from "../../../hooks/api/categories"
 import { useProductTypes } from "../../../hooks/api/product-types"
 import { useCollections } from "../../../hooks/api/collections"
@@ -133,65 +134,78 @@ export const RuleRow = ({ index, control, onRemove, form }: RuleRowProps) => {
   return (
     <div className="flex items-start gap-2">
       {/* Mode */}
-      <Controller
+      <Form.Field
         control={control}
         name={`rules.${index}.mode`}
         render={({ field }) => (
-          <Select value={field.value} onValueChange={field.onChange}>
-            <Select.Trigger className="w-[120px]">
-              <Select.Value placeholder={t("serviceFees.rules.mode")} />
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="include">
-                {t("serviceFees.rules.include")}
-              </Select.Item>
-              <Select.Item value="exclude">
-                {t("serviceFees.rules.exclude")}
-              </Select.Item>
-            </Select.Content>
-          </Select>
+          <Form.Item>
+            <Form.Control>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <Select.Trigger className="w-[120px]">
+                  <Select.Value placeholder={t("serviceFees.rules.mode")} />
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="include">
+                    {t("serviceFees.rules.include")}
+                  </Select.Item>
+                  <Select.Item value="exclude">
+                    {t("serviceFees.rules.exclude")}
+                  </Select.Item>
+                </Select.Content>
+              </Select>
+            </Form.Control>
+            <Form.ErrorMessage />
+          </Form.Item>
         )}
       />
 
       {/* Reference Type */}
-      <Controller
+      <Form.Field
         control={control}
         name={`rules.${index}.reference`}
         render={({ field }) => (
-          <Select
-            value={field.value}
-            onValueChange={(val) => {
-              field.onChange(val)
-              // Reset the value picker when type changes
-              form.setValue(`rules.${index}.reference_id`, "")
-            }}
-          >
-            <Select.Trigger className="w-[180px]">
-              <Select.Value placeholder={t("serviceFees.rules.selectType")} />
-            </Select.Trigger>
-            <Select.Content>
-              {RULE_REFERENCE_TYPES.map((opt) => (
-                <Select.Item key={opt.value} value={opt.value}>
-                  {t(opt.label)}
-                </Select.Item>
-              ))}
-            </Select.Content>
-          </Select>
+          <Form.Item>
+            <Form.Control>
+              <Select
+                value={field.value}
+                onValueChange={(val) => {
+                  field.onChange(val)
+                  // Reset the value picker when type changes
+                  form.setValue(`rules.${index}.reference_id`, "")
+                }}
+              >
+                <Select.Trigger className="w-[180px]">
+                  <Select.Value placeholder={t("serviceFees.rules.selectType")} />
+                </Select.Trigger>
+                <Select.Content>
+                  {RULE_REFERENCE_TYPES.map((opt) => (
+                    <Select.Item key={opt.value} value={opt.value}>
+                      {t(opt.label)}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            </Form.Control>
+            <Form.ErrorMessage />
+          </Form.Item>
         )}
       />
 
       {/* Value Picker */}
-      <Controller
+      <Form.Field
         control={control}
         name={`rules.${index}.reference_id`}
         render={({ field }) => (
-          <div className="flex-1">
-            <ValuePicker
-              reference={currentReference}
-              value={field.value}
-              onChange={field.onChange}
-            />
-          </div>
+          <Form.Item className="flex-1">
+            <Form.Control>
+              <ValuePicker
+                reference={currentReference}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            </Form.Control>
+            <Form.ErrorMessage />
+          </Form.Item>
         )}
       />
 

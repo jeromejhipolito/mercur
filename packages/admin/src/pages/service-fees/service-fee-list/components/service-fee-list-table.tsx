@@ -145,12 +145,12 @@ export const ServiceFeeListTable = () => {
         filters={[
           {
             key: "status",
-            label: "Status",
+            label: t("serviceFees.fields.status"),
             type: "select" as const,
             options: [
               { label: t("general.active"), value: "active" },
-              { label: "Pending", value: "pending" },
-              { label: "Inactive", value: "inactive" },
+              { label: t("serviceFees.fields.statusPending"), value: "pending" },
+              { label: t("serviceFees.fields.statusInactive"), value: "inactive" },
             ],
           },
           {
@@ -160,7 +160,7 @@ export const ServiceFeeListTable = () => {
             options: [
               { label: t("serviceFees.fields.itemLevel"), value: "item" },
               { label: t("serviceFees.fields.shopLevel"), value: "shop" },
-              { label: "Global", value: "global" },
+              { label: t("serviceFees.fields.globalLevel"), value: "global" },
             ],
           },
         ]}

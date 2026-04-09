@@ -3524,7 +3524,10 @@
       "endDate": "End Date",
       "endDateHint": "Leave empty for indefinite period",
       "createdDate": "Created Date",
-      "status": "Status"
+      "status": "Status",
+      "statusPending": "Pending",
+      "statusInactive": "Inactive",
+      "globalLevel": "Global"
     },
     "shopSelection": {
       "title": "Shop Selection",
@@ -3551,7 +3554,8 @@
     },
     "changeLogs": {
       "title": "Change Logs",
-      "noChanges": "No changes recorded yet"
+      "noChanges": "No changes recorded yet",
+      "changedBy": "by {{name}}"
     },
     "actions": {
       "createFee": "Create Service Fee",
@@ -3589,6 +3593,7 @@
       "deactivated": "Fee deactivated",
       "rulesUpdated": "Targeting rules updated successfully",
       "updateFailed": "Failed to update",
+      "activateFailed": "Failed to activate",
       "deactivateFailed": "Failed to deactivate"
     },
     "rules": {

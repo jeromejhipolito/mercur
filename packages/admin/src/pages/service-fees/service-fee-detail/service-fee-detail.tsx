@@ -25,8 +25,8 @@ import { RuleDisplayName } from "../components/rule-display-name"
 import { RULE_REFERENCE_TYPES } from "../constants"
 import type { ServiceFee, ServiceFeeRule, ChangeLog } from "../types"
 
-const formatDate = (date: string | null | undefined) => {
-  if (!date) return "Not Set"
+const formatDate = (date: string | null | undefined, fallback: string) => {
+  if (!date) return fallback
   return new Date(date).toLocaleDateString("en-US", {
     year: "numeric",
     month: "2-digit",
@@ -107,7 +107,7 @@ export const ServiceFeeDetailPage = () => {
               />
               <SectionRow
                 title={t("serviceFees.fields.createdDate")}
-                value={formatDate(service_fee.created_at)}
+                value={formatDate(service_fee.created_at, t("serviceFees.detail.notSet"))}
               />
             </Container>
 
@@ -118,11 +118,11 @@ export const ServiceFeeDetailPage = () => {
               </div>
               <SectionRow
                 title={t("serviceFees.fields.startDate")}
-                value={formatDate(service_fee.start_date)}
+                value={formatDate(service_fee.start_date, t("serviceFees.detail.notSet"))}
               />
               <SectionRow
                 title={t("serviceFees.fields.endDate")}
-                value={formatDate(service_fee.end_date)}
+                value={formatDate(service_fee.end_date, t("serviceFees.detail.notSet"))}
               />
               {!service_fee.start_date && !service_fee.end_date && (
                 <div className="px-6 py-4">
@@ -216,7 +216,7 @@ export const ServiceFeeDetailPage = () => {
                         </Text>
                         {log.changed_by && (
                           <Text className="text-ui-fg-muted text-xs">
-                            by {log.changed_by}
+                            {t("serviceFees.changeLogs.changedBy", { name: log.changed_by })}
                           </Text>
                         )}
                       </div>
@@ -259,7 +259,7 @@ const ServiceFeeActions = ({ serviceFee }: { serviceFee: ServiceFee }) => {
       await activate()
       toast.success(t("serviceFees.toast.activated"))
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to activate"
+      const message = e instanceof Error ? e.message : t("serviceFees.toast.activateFailed")
       toast.error(message)
     }
   }
@@ -280,7 +280,7 @@ const ServiceFeeActions = ({ serviceFee }: { serviceFee: ServiceFee }) => {
       await deactivate()
       toast.success(t("serviceFees.toast.deactivated"))
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Failed to deactivate"
+      const message = e instanceof Error ? e.message : t("serviceFees.toast.deactivateFailed")
       toast.error(message)
     }
   }
